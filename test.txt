@@ -1,0 +1,2 @@
+./a.out "/bin/cat" "|" "/bin/cat" "|" "/bin/ls" 
+./a.out "cd" "../" ; "/bin/ls" 
