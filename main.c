@@ -55,14 +55,12 @@ int exec_cmd(char **ptr, int delim_off, char **envp)
 
 int do_cd(char **ptr, int line_end_off)
 {
-	// examでバグる
 	if (line_end_off != 2) {
 		printf("arg err\n");
-		exit(1);
+		return (0);
 	}
 	if (chdir(ptr[line_end_off - 1]) == -1) {
 		printf("err path\n");
-		exit(1);
 	}
 	return (0);
 }
