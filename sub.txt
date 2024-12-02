@@ -1,0 +1,74 @@
+マイクロシェルの問題
+
+■日本語
+課題名: microshell
+提出ファイル名: microshell.c
+許可されている関数: malloc, free, write, close, fork, waitpid, signal, kill, exit
+				, chdir, execve, dup, dup2, pipe, strcmp, strncmp
+--------------------------------------------------------------------------------------
+
+シェルコマンドを実行するような振る舞いをするプログラムを作成してください。
+- 実行するコマンドラインは、このプログラムの引数として与えられます。
+- 実行可能ファイルのパスは絶対パスまたは相対パスですが、プログラムはパスを構築してはいけません（たとえば、PATH変数から）。
+- bashのように「|」と「;」を実装する必要があります。
+  - 「|」の直前や直後に何もないか、「|」や「;」が連続していることはありません。
+- プログラムは組み込みのcdコマンドを実装する必要がありますが、
+	パスを引数として指定するのみです（「-」やパラメータなしではありません）。
+  - cdの引数の数が間違っている場合、プログラムは「error: cd: bad arguments」というエラーメッセージを標準エラー出力に出力し、
+  	続けて改行文字を出力する必要があります。
+  - cdに失敗した場合、プログラムは「error: cd: cannot change directory to path_to_change」というエラーメッセージを
+  	標準エラー出力に出力し、続けて改行文字を出力します。ここで、path_to_changeはcdの引数に置き換えられます。
+  - cdコマンドの直前や直後に「|」があることはありません。
+- ワイルドカード（*、~など）の管理は必要ありません。
+- 環境変数（$BLAなど）の管理は必要ありません。
+- execveとchdir以外のシステムコールがエラーを返した場合、プログラムはすぐに標準エラー出力に「error: fatal」という
+  メッセージを出力し、改行文字を出力してプログラムを終了する必要があります。
+- execveが失敗した場合、プログラムは「error: cannot execute executable_that_failed」というメッセージを標準エラー出力に出力し、
+  続けて改行文字を出力します。ここで、executable_that_failedは失敗した実行可能ファイルのパスで置き換えられます（execveの最初の引数です）。
+- プログラムは、「オープンされたファイル」の数を30以下に制限していても、何百もの「|」を処理できるようにする必要があります。
+
+例えば、次のように動作するはずです:
+$>./microshell /bin/ls "|" /usr/bin/grep microshell ";" /bin/echo i love my microshell
+microshell
+i love my microshell
+$>
+
+ヒント:
+execveに環境変数を渡すのを忘れないでください。
+
+ヒント:
+ファイルディスクリプタをリークしないようにしてください！
+
+
+■英語
+Assignment name  : microshell
+Expected files   : microshell.c
+Allowed functions: malloc, free, write, close, fork, waitpid, signal, kill, exit, chdir, execve, dup, dup2, pipe, strcmp, strncmp
+--------------------------------------------------------------------------------------
+
+Write a program that will behave like executing a shell command
+- The command line to execute will be the arguments of this program
+- Executable's path will be absolute or relative but your program must not build a path (from the PATH variable for example)
+- You must implement "|" and ";" like in bash
+	- we will never try a "|" immediately followed or preceded by nothing or "|" or ";"
+- Your program must implement the built-in command cd only with a path as argument (no '-' or without parameters)
+	- if cd has the wrong number of argument your program should print in STDERR "error: cd: bad arguments" followed by a '\n'
+	- if cd failed your program should print in STDERR "error: cd: cannot change directory to path_to_change" followed by a '\n' with path_to_change replaced by the argument to cd
+	- a cd command will never be immediately followed or preceded by a "|"
+- You don't need to manage any type of wildcards (*, ~ etc...)
+- You don't need to manage environment variables ($BLA ...)
+- If a system call, except execve and chdir, returns an error your program should immediatly print "error: fatal" in STDERR followed by a '\n' and the program should exit
+- If execve failed you should print "error: cannot execute executable_that_failed" in STDERR followed by a '\n' with executable_that_failed replaced with the path of the failed executable (It should be the first argument of execve)
+- Your program should be able to manage more than hundreds of "|" even if we limit the number of "open files" to less than 30.
+
+for example this should work:
+$>./microshell /bin/ls "|" /usr/bin/grep microshell ";" /bin/echo i love my microshell
+microshell
+i love my microshell
+$>
+
+Hints:
+Don't forget to pass the environment variable to execve
+
+Hints:
+Do not leak file descriptors!
