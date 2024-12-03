@@ -120,7 +120,7 @@ void exec_cmd(char **ptr, int delim_off, char **envp)
 
 void exec_line(char **ptr, int line_end_off, char **envp)
 {
-	if (strcmp(*ptr, ";") == 0)
+	if (line_end_off == 0 || strcmp(*ptr, ";") == 0)
 		return;
 	if (strcmp(*ptr, "cd") == 0)
 		return (do_cd(ptr, line_end_off));
