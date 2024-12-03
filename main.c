@@ -56,16 +56,6 @@ void x_dup2(int srcfd, int destfd)
 	}
 }
 
-// int x_dup(int cpyfd)
-// {
-// 	int ret = dup(cpyfd);
-// 	if (ret == -1) {
-// 		put_err(FATAL_ERR);
-// 		exit(1);
-// 	}
-// 	return (ret);
-// }
-
 void x_execve(char *path, char **arg, char **envp)
 {
 	if (execve(path, arg, envp) == -1) {
@@ -74,45 +64,6 @@ void x_execve(char *path, char **arg, char **envp)
 		put_err("\n");
 		exit(1);
 	}
-}
-
-void wait_proc(int proc_count)
-{
-	int i = 0;
-	while (i++ < proc_count) {
-		if (waitpid(0, NULL, 0) == -1) {
-			put_err(FATAL_ERR);
-			exit(1);
-		}
-	}
-}
-
-int exec_cmd(char **ptr, int delim_off, char **envp)
-{
-	static int tmpfd_in = STDIN_FILENO;
-	int pipefd[2];
-
-	x_pipe(pipefd);
-	pid_t pid = x_fork();
-	if (pid == 0) {
-		close(pipefd[0]);
-		x_dup2(tmpfd_in, STDIN_FILENO);
-		if (ptr[delim_off] && strcmp(ptr[delim_off], "|") == 0)
-			x_dup2(pipefd[1], STDOUT_FILENO);
-		close(pipefd[1]);  // add
-		ptr[delim_off] = NULL;
-		x_execve(*ptr, ptr, envp);
-		exit(0);
-	}
-	close(pipefd[1]);
-	if (tmpfd_in != STDIN_FILENO)
-		close(tmpfd_in);
-	tmpfd_in = pipefd[0];
-	if (!ptr[delim_off] || strcmp(ptr[delim_off], ";") == 0) {
-		close(tmpfd_in);
-		tmpfd_in = STDIN_FILENO;
-	}
-	return (1);
 }
 
 void do_cd(char **ptr, int line_end_off)
@@ -129,29 +80,68 @@ void do_cd(char **ptr, int line_end_off)
 	return;
 }
 
+void wait_proc(int proc_count)
+{
+	int i = 0;
+	while (i++ < proc_count) {
+		if (waitpid(0, NULL, 0) == -1) {
+			put_err(FATAL_ERR);
+			exit(1);
+		}
+	}
+}
+
+void exec_cmd(char **ptr, int delim_off, char **envp)
+{
+	static int tmpfd_in = STDIN_FILENO;
+	int pipefd[2];
+
+	x_pipe(pipefd);
+	pid_t pid = x_fork();
+	if (pid == 0) {
+		close(pipefd[0]);
+		x_dup2(tmpfd_in, STDIN_FILENO);
+		if (ptr[delim_off] && strcmp(ptr[delim_off], "|") == 0)
+			x_dup2(pipefd[1], STDOUT_FILENO);
+		close(pipefd[1]);
+		ptr[delim_off] = NULL;
+		x_execve(*ptr, ptr, envp);
+		exit(0);
+	}
+	close(pipefd[1]);
+	if (tmpfd_in != STDIN_FILENO)
+		close(tmpfd_in);
+	tmpfd_in = pipefd[0];
+	if (!ptr[delim_off] || strcmp(ptr[delim_off], ";") == 0) {
+		close(tmpfd_in);
+		tmpfd_in = STDIN_FILENO;
+	}
+}
+
 void exec_line(char **ptr, int line_end_off, char **envp)
 {
+	if (strcmp(*ptr, ";") == 0)
+		return;
 	if (strcmp(*ptr, "cd") == 0)
 		return (do_cd(ptr, line_end_off));
 
 	int proc_count = 0;
-	// int recoverfd_in = x_dup(STDIN_FILENO);
 	while (1) {
 		int delim_off = get_delim_off(ptr, TRUE);
-		proc_count += exec_cmd(ptr, delim_off, envp);
+		exec_cmd(ptr, delim_off, envp);
+		proc_count++;
 		if (!ptr[delim_off] || strcmp(ptr[delim_off], ";") == 0)
 			break;
 		ptr = &ptr[delim_off + 1];
 	}
 	wait_proc(proc_count);
-	// x_dup2(recoverfd_in, STDIN_FILENO);
-	// close(recoverfd_in);
 }
 
 int main(int argc, char **argv, char **envp)
 {
 	if (argc <= 1)
 		return (0);
+
 	char **ptr = ++argv;
 	while (1) {
 		int line_end_off = get_delim_off(ptr, FALSE);
